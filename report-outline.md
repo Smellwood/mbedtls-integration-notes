@@ -43,19 +43,19 @@ Footnote 1: This run counts 251 conflicts. The independent run's conflict table 
 ### 5.2 mbedtls-3.6
 - 139/141 suites; failures traced to #10432 and #10169.
 - #10432: two test-data format errors (a bare 0 parameter and an unquoted `abcde` string) plus a reference to fixture `server1.req.pw` that does not exist in the framework repo; fixing the format errors leaves one case pending a companion framework PR.
-- Default-config replication (counterpart run): 41-PR default-config tree, 140/141 suites, ASan/UBSan clean; failing suite: [to be added from the independent run's log].
+- Default-config replication (counterpart run): 41-PR default-config tree, 140/141 suites, ASan/UBSan clean; failing suite: `x509write` (#10432; the suite fails to parse its test data: `FATAL PARSE ERROR`). Release and ASan/UBSan builds both 140/141 on a serial rerun; 4 PSA storage/ITS suites failed only under `ctest -j8` and passed serially (same parallel flakiness occurs on the clean base).
 - Default-config build breaks found in replication: #11051 (missing restartable-ECP guard in fuzz target; failure mechanics verified by both operators) and #11052 (unused NV-seed functions without the entropy option; counterpart-verified).
 
 ### 5.3 development
 - 150/152 suites; failing suites pkcs7 and x509parse.
 - Failure attribution (counterpart-bisected, pending re-run): pkcs7 28 cases to #10941 (missing framework data, needs companion framework PR); x509parse to #7696 (79 cases: 72 rejections of explicitly-encoded v1 certificates, an interop behavior change; 7 malformed version fields falling through to the serial parser) and #10824 (108 cases: test vectors encoding unique-ID fields the old way; mechanical tag swap restores 899/899).
 - #10839: 15 cases caused by test CAs with serial number 0, consistent with the maintainer's own note on the PR. Single-operator (counterpart-reported). Measured with the PR applied alone, so these 15 are not part of the 187 combined-tree x509parse failures.
-- #10746 ("Resolve failure caused by empty digest algorithm"): its tests need a companion framework PR, per the PR's own discussion. No failure count from either run; listed so it is not lost.
+- #10746 ("Resolve failure caused by empty digest algorithm"): applied alone on development (counterpart run), pkcs7 is 819/823: 4 new cases fail with `MBEDTLS_ERR_PK_FILE_IO_ERROR` because `pkcs7_empty_digest.der` and `pkcs7_data_cert_signed_sha256_empty_digest.der` are not in the framework submodule. Needs a companion framework PR.
 - #9460 (2024 PR): no longer builds on current development; exact errors and a five-line fix posted on the PR.
 
 ## 6. Cross-cutting findings
 
-- Compiler-warning-as-error class: e.g. #7694 (reported on gcc 11.4, full config, -Werror: gcc 11.4 `-Werror=maybe-uninitialized` in x509.c; not reproduced under gcc 14.2 - unresolved whether false positive or latent bug; reported neutrally).
+- Compiler-warning-as-error class: e.g. #7694 (gcc 11.4, full config, `-Werror=maybe-uninitialized` in x509.c, single-operator report; not reproduced under gcc 14.2 across six build types - unresolved whether false positive or latent bug; reported neutrally).
 - PR overlap (checked against both diffs): #10831 and #10852 add the identical `len < 4` check in `dummy_ticket_parse()` in ssl_server2.c. #10852 also fixes a strlen read in ssl_context_info.c and has a ChangeLog entry. #10831 also deletes a closing `#endif` for MBEDTLS_SSL_SESSION_TICKETS && MBEDTLS_SSL_TICKET_C && MBEDTLS_HAVE_TIME (the "unterminated #else" symptom) and rewraps part of the function. For the ticket length check, #10852 covers everything #10831 does.
 - The draft-PR population (91) and what proportion is effectively abandoned vs active work.
 
