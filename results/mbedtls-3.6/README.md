@@ -29,8 +29,13 @@ Toolchain: gcc 11.4, cmake 3.22.1, Ubuntu 22.04.
 - Build: green.
 - Test suites: 139/141 pass.
 - Real failures:
-  - **Mbed TLS #10432**: adds challenge-password CSR test data the 3.6 test parser rejects (FATAL PARSE ERROR).
-  - **Mbed TLS #10169** "adjust_legacy_from_psa: Add XTS algorithm support": breaks the AES 512-bit XTS storage-format save case (1460/1461 cases pass in that suite).
+  - **Mbed TLS #10432**: adds a challenge-password parameter to the CSR check, but its new test data lines pass `0` instead of an empty string; the 3.6 test parser stops with FATAL PARSE ERROR on the first case. (Cause pinned by Smellwood's independent run; matches the failure observed here.)
+  - **Mbed TLS #10169** "adjust_legacy_from_psa: Add XTS algorithm support": the AES 512-bit XTS storage-format save case gets PSA_ERROR_INVALID_ARGUMENT (1460/1461 cases pass in that suite). Only visible with XTS enabled; default config skips those cases.
+
+## Updates from Smellwood's independent run (gcc 14.2, default + full config)
+
+- Confirmed: published head broken, tested tree 139/141 serial, both failures above.
+- New (default config only, outside my full-config scope): **#11051** (fuzz_x509verify.c uses `x509_crt_restart_ctx` with no MBEDTLS_ECP_RESTARTABLE guard) and **#11052** (fuzz_nv_seed_read/write unused without ENTROPY_NV_SEED, -Werror) also break the build. Their default-config tree (41 PRs, minus #10184/#11051/#11052/#11053) passes 140/141 serial and is clean under ASan+UBSan. Not yet re-run here.
 
 ## Scope
 
