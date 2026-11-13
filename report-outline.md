@@ -10,9 +10,9 @@ Snapshot date: 2026-11-12 (the open-PR set as enumerated that day; the queue mov
 
 - Scope: every open pull request in Mbed-TLS/mbedtls as of the snapshot date (383 PRs: 319 targeting development, 55 targeting mbedtls-3.6, 9 targeting mbedtls-4.1; 91 drafts).
 - Method in one paragraph: textual merge attempt per target branch, integration branches built and test suites run per branch, independent replication by a second operator on separate hardware and toolchain.
-- Headline results (see footnote 1 for the 251 vs 253 conflict count): 132 of 383 PRs apply cleanly to their target; 251 present textual conflicts (235 conflict with the current base, of which 17 are submodule-pointer-only and trivially resolvable; 16 conflict only with other PRs in the combined tree). 127 PRs are effectively integrable today (77 development / 43 mbedtls-3.6 / 7 mbedtls-4.1).
+- Headline results (see footnote 1 for why the per-PR table has 253 rows): 132 of 383 PRs apply cleanly to their target; 251 present textual conflicts (235 conflict with the current base, of which 17 are submodule-pointer-only and trivially resolvable; 16 conflict only with other PRs in the combined tree). 127 PRs are effectively integrable today (77 development / 43 mbedtls-3.6 / 7 mbedtls-4.1).
 
-Footnote 1: This run counts 251 conflicts. The independent run's conflict table has 253 rows. The two extra rows are two PRs opened after this run's snapshot (#11066 and #11067, backports of #11007), which the other run included. Same underlying set otherwise.
+Footnote 1: This run counts 251 conflicts. The independent run's per-PR table has 253 rows: the same 251 conflicts plus #11066 and #11067 (backports of #11007), both opened at 10:13 PM CST on 2026-11-12 (04:13 UTC on 2026-11-13), after this run's snapshot. Neither one conflicts. Both merge cleanly onto their target branch and are listed in that table as "clean now", not as conflicts.
 
 ## 2. Motivation and context
 
@@ -43,7 +43,7 @@ Footnote 1: This run counts 251 conflicts. The independent run's conflict table 
 ### 5.2 mbedtls-3.6
 - 139/141 suites; failures traced to #10432 and #10169.
 - #10432: two test-data format errors (a bare 0 parameter and an unquoted `abcde` string) plus a reference to fixture `server1.req.pw` that does not exist in the framework repo; fixing the format errors leaves one case pending a companion framework PR.
-- Default-config replication (counterpart run): 41-PR default-config tree, 140/141 suites, ASan/UBSan clean; failing suite: `x509write` (#10432; the suite fails to parse its test data: `FATAL PARSE ERROR`). Release and ASan/UBSan builds both 140/141 on a serial rerun; 4 PSA storage/ITS suites failed only under `ctest -j8` and passed serially (same parallel flakiness occurs on the clean base).
+- Default-config replication (counterpart run): 41-PR default-config tree, 140/141 suites, ASan/UBSan clean; failing suite: `x509write` (#10432; the suite fails to parse its test data: `FATAL PARSE ERROR`). Release and ASan/UBSan builds both 140/141 on a serial rerun; PSA storage/ITS suites failed only under `ctest -j8` (4 in Release, 2 in ASan/UBSan) and passed serially (same parallel flakiness occurs on the clean base).
 - Default-config build breaks found in replication: #11051 (missing restartable-ECP guard in fuzz target; failure mechanics verified by both operators) and #11052 (unused NV-seed functions without the entropy option; counterpart-verified).
 
 ### 5.3 development
@@ -55,7 +55,7 @@ Footnote 1: This run counts 251 conflicts. The independent run's conflict table 
 
 ## 6. Cross-cutting findings
 
-- Compiler-warning-as-error class: e.g. #7694 (gcc 11.4, full config, `-Werror=maybe-uninitialized` in x509.c, single-operator report; not reproduced under gcc 14.2 across six build types - unresolved whether false positive or latent bug; reported neutrally).
+- Compiler-warning-as-error class: e.g. #7694 (gcc 11.4, full config, `-Werror=maybe-uninitialized` in x509.c, single-operator report; not reproduced under gcc 14.2 (one Release build, default config, fatal warnings: 0 `maybe-uninitialized` warnings) - unresolved whether false positive or latent bug; reported neutrally).
 - PR overlap (checked against both diffs): #10831 and #10852 add the identical `len < 4` check in `dummy_ticket_parse()` in ssl_server2.c. #10852 also fixes a strlen read in ssl_context_info.c and has a ChangeLog entry. #10831 also deletes a closing `#endif` for MBEDTLS_SSL_SESSION_TICKETS && MBEDTLS_SSL_TICKET_C && MBEDTLS_HAVE_TIME (the "unterminated #else" symptom) and rewraps part of the function. For the ticket length check, #10852 covers everything #10831 does.
 - The draft-PR population (91) and what proportion is effectively abandoned vs active work.
 
@@ -68,7 +68,7 @@ Footnote 1: This run counts 251 conflicts. The independent run's conflict table 
 
 ## 8. Data availability and reproduction
 
-- This repository: merge lists, conflict tables (253 rows), build/test logs, scripts.
+- This repository: merge lists, per-PR table (253 rows: the 251 conflicts plus the 2 clean-now PRs in footnote 1), build/test logs, scripts.
 - Statement that every claim in the report is backed by a reproducible log or is explicitly marked as single-operator.
 
 ## 9. Limitations
